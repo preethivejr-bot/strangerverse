@@ -1,6 +1,6 @@
 // Centralized Environment & Network Configuration
 
-// Real-time Cloud WebSocket Server URL (Cloudflare Tunnel / Cloud engine)
+// Real-time Cloud WebSocket Server URL (Cloudflare Tunnel to real-time engine)
 export const SOCKET_SERVER_URL: string = 
   import.meta.env.VITE_SOCKET_URL || 
   'https://governor-expo-virgin-mineral.trycloudflare.com';
@@ -21,7 +21,22 @@ const iceServersList: RTCIceServer[] = [
   { urls: 'stun:stun2.l.google.com:19302' },
   { urls: 'stun:stun3.l.google.com:19302' },
   { urls: 'stun:stun.cloudflare.com:3478' },
-  { urls: 'stun:stun.relay.metered.ca:80' }
+  // Metered OpenRelay community TURN for symmetric NAT & mobile network traversal
+  {
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  }
 ];
 
 // If custom TURN server is configured via env

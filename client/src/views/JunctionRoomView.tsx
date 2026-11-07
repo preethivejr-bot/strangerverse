@@ -30,6 +30,7 @@ import { DEFAULT_TAMIL_NADU_JUNCTIONS } from '../constants';
 
 interface JunctionParticipant {
   userId: string;
+  socketId?: string;
   username: string;
   photoURL?: string;
   role: Role;
@@ -93,6 +94,7 @@ export const JunctionRoomView: React.FC<JunctionRoomViewProps> = ({
   const [activeGameState, setActiveGameState] = useState<ActiveGameState | null>(null);
 
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
+  const remoteAudiosRef = useRef<Map<string, HTMLAudioElement>>(new Map());
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -201,6 +203,34 @@ export const JunctionRoomView: React.FC<JunctionRoomViewProps> = ({
       }
     });
 
+    socket.on('junction:voice-signal', async (data: { districtId: string; senderSocketId: string; signal: any }) => {
+      if (data.districtId === districtId) {
+        await webrtcManager.handleJunctionVoiceSignal(districtId, data.senderSocketId, data.signal);
+      }
+    });
+
+    webrtcManager.onJunctionRemoteStream = (senderSocketId, stream) => {
+      console.log('[Junction Audio] Playing voice stream for:', senderSocketId);
+      let audioEl = remoteAudiosRef.current.get(senderSocketId);
+      if (!audioEl) {
+        audioEl = new Audio();
+        audioEl.autoplay = true;
+        audioEl.volume = 1.0;
+        remoteAudiosRef.current.set(senderSocketId, audioEl);
+      }
+      audioEl.srcObject = stream;
+      audioEl.play().catch(e => console.warn('[Junction Audio] Play notice:', e));
+    };
+
+    webrtcManager.onJunctionPeerDisconnected = (senderSocketId) => {
+      const audioEl = remoteAudiosRef.current.get(senderSocketId);
+      if (audioEl) {
+        audioEl.pause();
+        audioEl.srcObject = null;
+        remoteAudiosRef.current.delete(senderSocketId);
+      }
+    };
+
     return () => {
       socket.off('junction:joined-success');
       socket.off('junction:user-joined');
@@ -211,12 +241,18 @@ export const JunctionRoomView: React.FC<JunctionRoomViewProps> = ({
       socket.off('junction:user-kicked');
       socket.off('junction:you-were-kicked');
       socket.off('junction:user-mute-toggled');
+      socket.off('junction:voice-signal');
       socket.off('game:updated');
     };
   }, [districtId, user]);
 
   const handleLeave = () => {
     socket.emit('junction:leave', { districtId });
+    remoteAudiosRef.current.forEach(el => {
+      el.pause();
+      el.srcObject = null;
+    });
+    remoteAudiosRef.current.clear();
     webrtcManager.cleanup();
     onLeave();
   };
@@ -226,6 +262,13 @@ export const JunctionRoomView: React.FC<JunctionRoomViewProps> = ({
     if (next) {
       await webrtcManager.requestMicrophone();
       webrtcManager.setMute(false);
+
+      // Connect WebRTC audio mesh to all other room participants
+      participants.forEach(p => {
+        if (p.socketId && p.userId !== user?.id) {
+          webrtcManager.connectJunctionPeer(districtId, p.socketId, true);
+        }
+      });
     } else {
       webrtcManager.setMute(true);
     }

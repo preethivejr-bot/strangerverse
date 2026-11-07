@@ -60,9 +60,14 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ user, onOpenAuth }
     };
 
     webrtcManager.onRemoteStream = (stream) => {
+      console.log('[WebRTC] Outputting remote audio stream');
       if (remoteAudioRef.current) {
         remoteAudioRef.current.srcObject = stream;
-        remoteAudioRef.current.play().catch(e => console.warn('Audio play error:', e));
+        remoteAudioRef.current.volume = 1.0;
+        remoteAudioRef.current.muted = false;
+        remoteAudioRef.current.play().catch(e => {
+          console.warn('Audio play autoplay prompt:', e);
+        });
       }
     };
 
