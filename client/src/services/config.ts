@@ -2,9 +2,11 @@
 
 export const SERVER_URL: string = 
   import.meta.env.VITE_SERVER_URL || 
-  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:5000'
-    : 'https://strangerverse-backend.onrender.com');
+  (typeof window !== 'undefined'
+    ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000'
+        : window.location.origin)
+    : '');
 
 // Production-grade STUN & TURN servers for WebRTC audio calls
 const iceServersList: RTCIceServer[] = [

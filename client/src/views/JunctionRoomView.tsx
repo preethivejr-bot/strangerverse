@@ -26,6 +26,7 @@ import { webrtcManager } from '../services/webrtc';
 import { sound } from '../services/sound';
 import { MultiplayerGamesView } from './MultiplayerGamesView';
 import { ReportModal } from '../components/ReportModal';
+import { DEFAULT_TAMIL_NADU_JUNCTIONS } from '../constants';
 
 interface JunctionParticipant {
   userId: string;
@@ -48,6 +49,10 @@ export const JunctionRoomView: React.FC<JunctionRoomViewProps> = ({
   user,
   onLeave
 }) => {
+  const initialJunction = DEFAULT_TAMIL_NADU_JUNCTIONS.find(
+    j => j.id.toLowerCase() === districtId.toLowerCase()
+  );
+
   const [junctionData, setJunctionData] = useState<{
     id: string;
     name: string;
@@ -56,9 +61,27 @@ export const JunctionRoomView: React.FC<JunctionRoomViewProps> = ({
     accentColor: string;
     maxCapacity: number;
     activeModeratorId: string | null;
-  } | null>(null);
+  } | null>(initialJunction ? {
+    id: initialJunction.id,
+    name: initialJunction.name,
+    tagline: initialJunction.tagline,
+    landmark: initialJunction.landmark,
+    accentColor: initialJunction.accentColor,
+    maxCapacity: initialJunction.maxCapacity,
+    activeModeratorId: null
+  } : null);
 
-  const [participants, setParticipants] = useState<JunctionParticipant[]>([]);
+  const [participants, setParticipants] = useState<JunctionParticipant[]>(
+    user ? [{
+      userId: user.id,
+      username: user.displayName,
+      photoURL: user.photoURL,
+      role: user.role,
+      joinedAt: Date.now(),
+      isMicOn: false,
+      isMutedByMod: false
+    }] : []
+  );
   const [messages, setMessages] = useState<JunctionMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isMicOn, setIsMicOn] = useState(false);

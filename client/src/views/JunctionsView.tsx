@@ -29,6 +29,15 @@ export const JunctionsView: React.FC<JunctionsViewProps> = ({
   // Always initialize with all 10 Tamil Nadu districts so cards are immediately visible!
   const [junctions, setJunctions] = useState<JunctionSummary[]>(DEFAULT_TAMIL_NADU_JUNCTIONS);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [pendingDistrictId, setPendingDistrictId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user && pendingDistrictId) {
+      const target = pendingDistrictId;
+      setPendingDistrictId(null);
+      onJoinJunction(target);
+    }
+  }, [user, pendingDistrictId, onJoinJunction]);
 
   useEffect(() => {
     // 1. Immediate REST API fetch so data loads in milliseconds
@@ -71,6 +80,7 @@ export const JunctionsView: React.FC<JunctionsViewProps> = ({
 
   const handleJoinClick = (districtId: string, currentCount: number, maxCapacity: number) => {
     if (!user) {
+      setPendingDistrictId(districtId);
       onOpenAuth();
       return;
     }
