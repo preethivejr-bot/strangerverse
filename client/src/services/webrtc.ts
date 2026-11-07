@@ -130,11 +130,10 @@ export class WebRTCManager {
 
     // Remote audio track arrival
     this.peerConnection.ontrack = (event) => {
-      console.log('[WebRTC] Received remote audio track from stranger:', event.streams);
-      if (event.streams && event.streams[0]) {
-        if (this.onRemoteStream) {
-          this.onRemoteStream(event.streams[0]);
-        }
+      console.log('[WebRTC] Received remote audio track from stranger:', event);
+      const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+      if (this.onRemoteStream) {
+        this.onRemoteStream(stream);
       }
     };
 
@@ -248,11 +247,10 @@ export class WebRTCManager {
 
     // Incoming remote audio track from this junction participant
     pc.ontrack = (event) => {
-      console.log(`[Junction WebRTC] Incoming audio track from participant ${targetSocketId}`);
-      if (event.streams && event.streams[0]) {
-        if (this.onJunctionRemoteStream) {
-          this.onJunctionRemoteStream(targetSocketId, event.streams[0]);
-        }
+      console.log(`[Junction WebRTC] Incoming audio track from participant ${targetSocketId}`, event);
+      const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+      if (this.onJunctionRemoteStream) {
+        this.onJunctionRemoteStream(targetSocketId, stream);
       }
     };
 

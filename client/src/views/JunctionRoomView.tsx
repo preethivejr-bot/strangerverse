@@ -215,6 +215,7 @@ export const JunctionRoomView: React.FC<JunctionRoomViewProps> = ({
       if (!audioEl) {
         audioEl = new Audio();
         audioEl.autoplay = true;
+        audioEl.setAttribute('playsinline', 'true');
         audioEl.volume = 1.0;
         remoteAudiosRef.current.set(senderSocketId, audioEl);
       }

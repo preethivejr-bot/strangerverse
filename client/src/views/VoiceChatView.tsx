@@ -35,6 +35,14 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ user, onOpenAuth }
   const [statusMessage, setStatusMessage] = useState<string>('Ready to meet random voice strangers.');
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
+  const statusRef = useRef(status);
+  const isMutedRef = useRef(isMuted);
+
+  useEffect(() => {
+    statusRef.current = status;
+    isMutedRef.current = isMuted;
+  }, [status, isMuted]);
 
   // Timer for active call
   useEffect(() => {
@@ -49,10 +57,10 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ user, onOpenAuth }
     return () => clearInterval(interval);
   }, [status]);
 
-  // Audio visualizer hookup
+  // Audio visualizer and WebRTC stream hookup (persisted throughout component lifetime)
   useEffect(() => {
     webrtcManager.onVolumeChange = (vol) => {
-      if (status === 'CONNECTED' && !isMuted) {
+      if (statusRef.current === 'CONNECTED' && !isMutedRef.current) {
         setVolumeLevel(vol);
       } else {
         setVolumeLevel(0);
@@ -60,13 +68,14 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ user, onOpenAuth }
     };
 
     webrtcManager.onRemoteStream = (stream) => {
-      console.log('[WebRTC] Outputting remote audio stream');
+      console.log('[WebRTC] Outputting remote audio stream:', stream);
+      remoteStreamRef.current = stream;
       if (remoteAudioRef.current) {
         remoteAudioRef.current.srcObject = stream;
         remoteAudioRef.current.volume = 1.0;
         remoteAudioRef.current.muted = false;
         remoteAudioRef.current.play().catch(e => {
-          console.warn('Audio play autoplay prompt:', e);
+          console.warn('[WebRTC] Audio play retry/prompt:', e);
         });
       }
     };
@@ -77,6 +86,10 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ user, onOpenAuth }
         setStatus('CONNECTED');
         setStatusMessage('Audio stream encrypted and live!');
         sound.playMatchSuccess();
+        if (remoteAudioRef.current && remoteStreamRef.current) {
+          remoteAudioRef.current.srcObject = remoteStreamRef.current;
+          remoteAudioRef.current.play().catch(() => {});
+        }
       } else if (state === 'failed' || state === 'disconnected') {
         handleStrangerLeft('Voice connection interrupted.');
       }
@@ -87,7 +100,7 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ user, onOpenAuth }
       webrtcManager.onRemoteStream = null;
       webrtcManager.onConnectionStateChange = null;
     };
-  }, [status, isMuted]);
+  }, []);
 
   // Socket event listeners for 1-on-1 voice
   useEffect(() => {
@@ -103,8 +116,12 @@ export const VoiceChatView: React.FC<VoiceChatViewProps> = ({ user, onOpenAuth }
       setStatusMessage(`Found stranger! Connecting WebRTC audio channel...`);
 
       // Initialize WebRTC
-      await webrtcManager.requestMicrophone();
-      webrtcManager.init1on1PeerConnection(data.sessionId, data.isInitiator);
+      try {
+        await webrtcManager.requestMicrophone();
+        await webrtcManager.init1on1PeerConnection(data.sessionId, data.isInitiator);
+      } catch (err) {
+        console.error('[WebRTC] Connection setup error:', err);
+      }
     });
 
     socket.on('voice:signal', (data: { sessionId: string; signal: { type: string } }) => {
