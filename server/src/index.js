@@ -662,13 +662,69 @@ io.on('connection', (socket) => {
   // ------------------------------------------
   // MULTIPLAYER GAMES (UNO, LUDO, TRUTH OR DARE)
   // ------------------------------------------
-  socket.on('game:start', ({ districtId, gameType, playerIds }) => {
-    const junction = store.getJunction(districtId);
-    if (!junction) return;
+  function checkAndRunBotTurn(districtId, game) {
+    if (!game || game.status !== 'IN_PROGRESS') return;
+    const current = game.getCurrentPlayer();
+    if (current && current.isBot) {
+      setTimeout(() => {
+        const g = store.junctionGames.get(districtId);
+        if (!g || g.status !== 'IN_PROGRESS') return;
+        const curr = g.getCurrentPlayer();
+        if (curr && curr.isBot && typeof g.playBotTurn === 'function') {
+          g.playBotTurn();
+          io.to(`junction_${districtId}`).emit('game:updated', {
+            districtId,
+            gameState: g.getState()
+          });
+          checkAndRunBotTurn(districtId, g);
+        }
+      }, 1300);
+    }
+  }
 
-    const selectedParticipants = junction.participants.filter(p => playerIds.includes(p.userId));
-    if (selectedParticipants.length < 2 && gameType !== 'truth_dare') {
-      return socket.emit('game:error', { message: 'At least 2 players are required to start the game.' });
+  socket.on('game:join-arena', ({ districtId }) => {
+    socket.join(`junction_${districtId}`);
+    const existing = store.junctionGames.get(districtId);
+    if (existing) {
+      socket.emit('game:updated', {
+        districtId,
+        gameState: existing.getState()
+      });
+    }
+  });
+
+  socket.on('game:start', ({ districtId, gameType, playerIds }) => {
+    socket.join(`junction_${districtId}`);
+    const junction = store.getJunction(districtId);
+    let selectedParticipants = [];
+
+    if (junction && junction.participants && junction.participants.length > 0) {
+      selectedParticipants = junction.participants.filter(p => playerIds && playerIds.includes(p.userId));
+    }
+
+    if (selectedParticipants.length === 0) {
+      const uId = store.socketToUser.get(socket.id) || (playerIds && playerIds[0]) || 'player_1';
+      const u = store.getUser(uId);
+      selectedParticipants.push({
+        userId: uId,
+        username: u?.displayName || 'Player 1'
+      });
+    }
+
+    // Auto-fill with intelligent AI Bots if fewer than 2 human players
+    if (selectedParticipants.length === 1 && (gameType === 'uno' || gameType === 'ludo')) {
+      selectedParticipants.push({
+        userId: 'bot_karthik',
+        username: 'Karthik (AI)',
+        isBot: true
+      });
+      if (gameType === 'uno') {
+        selectedParticipants.push({
+          userId: 'bot_ananya',
+          username: 'Ananya (AI)',
+          isBot: true
+        });
+      }
     }
 
     let game;
@@ -677,7 +733,7 @@ io.on('connection', (socket) => {
     } else if (gameType === 'ludo') {
       game = new LudoGame(districtId, selectedParticipants.slice(0, 4));
     } else if (gameType === 'truth_dare') {
-      game = new TruthDareGame(districtId, selectedParticipants.length > 0 ? selectedParticipants : junction.participants);
+      game = new TruthDareGame(districtId, selectedParticipants.length > 0 ? selectedParticipants : (junction ? junction.participants : selectedParticipants));
     }
 
     store.junctionGames.set(districtId, game);
@@ -685,13 +741,15 @@ io.on('connection', (socket) => {
       districtId,
       gameState: game.getState()
     });
+
+    checkAndRunBotTurn(districtId, game);
   });
 
   socket.on('game:action', ({ districtId, actionType, payload }) => {
     const game = store.junctionGames.get(districtId);
     if (!game) return;
 
-    const userId = store.socketToUser.get(socket.id);
+    const userId = store.socketToUser.get(socket.id) || payload.userId;
     if (!userId) return;
 
     let result = { error: 'Unknown action' };
@@ -729,6 +787,7 @@ io.on('connection', (socket) => {
         districtId,
         gameState: game.getState()
       });
+      checkAndRunBotTurn(districtId, game);
     }
   });
 

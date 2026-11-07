@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { 
   Gamepad2, 
@@ -38,9 +38,47 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
   const [selectedGameType, setSelectedGameType] = useState<'uno' | 'ludo' | 'truth_dare'>('uno');
   const [wildColorPickerOpen, setWildColorPickerOpen] = useState(false);
   const [pendingWildCardId, setPendingWildCardId] = useState<string | null>(null);
+  const [currentGameState, setCurrentGameState] = useState<ActiveGameState | null>(activeGameState);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeGameState) {
+      setCurrentGameState(activeGameState);
+    }
+  }, [activeGameState]);
+
+  useEffect(() => {
+    // Join game channel on socket so updates are received
+    socket.emit('game:join-arena', { districtId });
+
+    const handleGameUpdate = (data: { districtId: string; gameState: ActiveGameState | null }) => {
+      if (data.districtId === districtId) {
+        setCurrentGameState(data.gameState);
+        if (data.gameState?.status === 'FINISHED') {
+          confetti({ particleCount: 100, spread: 70 });
+        }
+      }
+    };
+
+    const handleGameError = (data: { message: string }) => {
+      setErrorMessage(data.message);
+      setTimeout(() => setErrorMessage(null), 4000);
+    };
+
+    socket.on('game:updated', handleGameUpdate);
+    socket.on('game:error', handleGameError);
+
+    return () => {
+      socket.off('game:updated', handleGameUpdate);
+      socket.off('game:error', handleGameError);
+    };
+  }, [districtId]);
 
   const startNewGame = (gameType: 'uno' | 'ludo' | 'truth_dare') => {
-    const playerIds = participants.slice(0, 4).map(p => p.userId);
+    const playerIds = participants.length > 0
+      ? participants.slice(0, 4).map(p => p.userId)
+      : (user ? [user.id] : ['player_1']);
+
     socket.emit('game:start', {
       districtId,
       gameType,
@@ -163,9 +201,15 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
   };
 
   // If no game currently active, render Game Lobby selector
-  if (!activeGameState) {
+  if (!currentGameState) {
     return (
       <div className="rounded-3xl glass-panel border border-white/10 p-8 space-y-8 shadow-2xl">
+        {errorMessage && (
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
         <div className="text-center space-y-2 max-w-xl mx-auto">
           <div className="w-12 h-12 rounded-2xl bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center mx-auto">
             <Gamepad2 className="w-6 h-6" />
@@ -243,6 +287,13 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
             </button>
           </div>
         </div>
+
+        {errorMessage && (
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -250,8 +301,8 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
   // ==========================================
   // ACTIVE GAME 1: UNO INTERFACE
   // ==========================================
-  if (activeGameState.type === 'uno') {
-    const uno = activeGameState as UnoState;
+  if (currentGameState.type === 'uno') {
+    const uno = currentGameState as UnoState;
     const me = uno.players.find(p => p.userId === user?.id);
     const isMyTurn = uno.currentTurnUser?.userId === user?.id;
 
@@ -283,6 +334,13 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
             </button>
           </div>
         </div>
+
+        {errorMessage && (
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
 
         {/* Winner Banner */}
         {uno.winner && (
@@ -362,6 +420,13 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
             </div>
           </div>
         </div>
+
+        {errorMessage && (
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
 
         {/* Player's Own Cards Hand */}
         {me && (
@@ -449,8 +514,8 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
   // ==========================================
   // ACTIVE GAME 2: LUDO INTERFACE
   // ==========================================
-  if (activeGameState.type === 'ludo') {
-    const ludo = activeGameState as LudoState;
+  if (currentGameState.type === 'ludo') {
+    const ludo = currentGameState as LudoState;
     const isMyTurn = ludo.currentTurnUser?.userId === user?.id;
     const me = ludo.players.find(p => p.userId === user?.id);
 
@@ -481,6 +546,13 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
             </button>
           </div>
         </div>
+
+        {errorMessage && (
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
 
         {/* Winner Announcement */}
         {ludo.winner && (
@@ -548,6 +620,13 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
           </div>
         </div>
 
+        {errorMessage && (
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
         {/* Player's Tokens Controller */}
         {me && (
           <div className="space-y-3 pt-3">
@@ -592,8 +671,8 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
   // ==========================================
   // ACTIVE GAME 3: TRUTH OR DARE INTERFACE
   // ==========================================
-  if (activeGameState.type === 'truth_dare') {
-    const td = activeGameState as TruthDareState;
+  if (currentGameState.type === 'truth_dare') {
+    const td = currentGameState as TruthDareState;
     const isSelected = td.selectedPlayer?.userId === user?.id;
 
     return (

@@ -3,7 +3,7 @@
 // Real-time Cloud WebSocket Server URL (Cloudflare Tunnel to real-time engine)
 export const SOCKET_SERVER_URL: string = 
   import.meta.env.VITE_SOCKET_URL || 
-  'https://governor-expo-virgin-mineral.trycloudflare.com';
+  'https://felt-mega-passes-word.trycloudflare.com';
 
 // REST API Server URL (Native Vercel Edge API)
 export const SERVER_URL: string = 

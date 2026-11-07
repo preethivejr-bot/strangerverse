@@ -96,7 +96,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
               <ShieldCheck className="w-4 h-4 text-purple-400" /> Automatic Stay-Moderator System
             </span>
             <span className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-emerald-400" /> Level 1 Super Manager Sovereignty
+              <Lock className="w-4 h-4 text-emerald-400" /> 10 District Junction Sovereign Hubs
             </span>
           </div>
         </div>

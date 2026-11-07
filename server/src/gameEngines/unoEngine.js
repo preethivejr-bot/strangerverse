@@ -7,6 +7,7 @@ export class UnoGame {
     this.players = players.map(p => ({
       userId: p.userId,
       username: p.username,
+      isBot: Boolean(p.isBot),
       cards: [],
       hasCalledUno: false
     }));
@@ -213,6 +214,23 @@ export class UnoGame {
       return { success: true, game: this.getState() };
     } else {
       return { error: 'You can only call UNO when you have 1 or 2 cards!' };
+    }
+  }
+
+  playBotTurn() {
+    if (this.status !== 'IN_PROGRESS') return null;
+    const player = this.getCurrentPlayer();
+    if (!player || !player.isBot) return null;
+
+    const playable = player.cards.find(c => this.canPlayCard(c));
+    if (playable) {
+      if (player.cards.length === 2) {
+        player.hasCalledUno = true;
+      }
+      const chosenColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+      return this.playCard(player.userId, playable.id, chosenColor);
+    } else {
+      return this.drawCard(player.userId);
     }
   }
 

@@ -17,6 +17,7 @@ export class LudoGame {
       return {
         userId: p.userId,
         username: p.username,
+        isBot: Boolean(p.isBot),
         color,
         tokens: [
           { id: 0, state: 'YARD', stepCount: -1, trackPos: -1 },
@@ -184,6 +185,27 @@ export class LudoGame {
     return { success: true, game: this.getState() };
   }
 
+  playBotTurn() {
+    if (this.status !== 'IN_PROGRESS') return null;
+    const player = this.getCurrentPlayer();
+    if (!player || !player.isBot) return null;
+
+    if (!this.hasRolled) {
+      const rollRes = this.rollDice(player.userId);
+      if (rollRes.error) return rollRes;
+      if (!this.hasRolled) return rollRes;
+    }
+
+    const validTokens = this.getValidTokensForPlayer(player, this.currentDice);
+    if (validTokens.length > 0) {
+      const chosen = validTokens.find(t => t.state === 'TRACK') || validTokens[0];
+      return this.moveToken(player.userId, chosen.id);
+    } else {
+      this.advanceTurn();
+      return { success: true, game: this.getState() };
+    }
+  }
+
   getState() {
     return {
       type: 'ludo',
@@ -199,6 +221,7 @@ export class LudoGame {
       players: this.players.map(p => ({
         userId: p.userId,
         username: p.username,
+        isBot: Boolean(p.isBot),
         color: p.color,
         finishedCount: p.finishedCount,
         tokens: p.tokens

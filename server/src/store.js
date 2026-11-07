@@ -41,6 +41,22 @@ class CentralStore {
         ]
       });
     }
+
+    // Global gaming arena for /games page
+    this.junctions.set('global_arena', {
+      id: 'global_arena',
+      name: 'Global Gaming Arena',
+      tagline: 'Multiplayer UNO, Ludo, and Truth or Dare',
+      description: 'Global tables for social multiplayer gaming',
+      landmark: 'StrangerVerse Arena',
+      accentColor: '#8B5CF6',
+      tags: ['Games', 'Multiplayer', 'UNO', 'Ludo'],
+      maxCapacity: 100,
+      participants: [],
+      activeModeratorId: null,
+      temporaryBans: new Map(),
+      messages: []
+    });
   }
 
   // User management

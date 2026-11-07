@@ -171,13 +171,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </button>
         </form>
 
-        {/* Role Enforcement Notice */}
-        <div className="mt-5 p-3 rounded-xl bg-white/5 border border-white/10 flex items-start gap-2.5 text-[11px] text-slate-400">
-          <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-          <span>
-            Every user is assigned <strong className="text-white">NORMAL USER</strong> by default with a unique personal ID. Administrative privileges are permanently locked to <strong className="text-amber-400">preethivejr@gmail.com</strong>.
-          </span>
-        </div>
+
       </div>
     </div>
   );
