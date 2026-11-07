@@ -3,4 +3,4 @@ Allow: /
 Disallow: /api/
 Disallow: /socket.io/
 
-Sitemap: https://strangerverse.vercel.app/sitemap.xml
+Sitemap: https://strangerverse-live.vercel.app/sitemap.xml

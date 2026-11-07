@@ -13,7 +13,7 @@ importers:
         version: 1.9.4
       firebase:
         specifier: ^13.2.0
-        version: 13.2.0(@types/react@19.3.0)(react@19.3.1)
+        version: 13.2.0(@types/react@19.3.0)(react-router-dom@7.18.5(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
       lucide-react:
         specifier: ^1.70.0
         version: 1.70.0(@types/react@19.3.0)(react@19.3.1)
@@ -23,6 +23,9 @@ importers:
       react-dom:
         specifier: ^19.3.1
         version: 19.3.1(react@19.3.1)
+      react-router-dom:
+        specifier: ^7.18.5
+        version: 7.18.5(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       socket.io-client:
         specifier: ^4.8.4
         version: 4.8.4
@@ -975,6 +978,10 @@ packages:
     resolution: {integrity: sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==}
     engines: {node: '>= 6'}
 
+  cookie@1.1.1:
+    resolution: {integrity: sha512-ei8Aos7ja0weRpFzJnEA9UHJ/7XQmqglbRwnf2ATjcB9Wq874VKH9kfjjirM6UhU2/E5fFYadylyhFldcqSidQ==}
+    engines: {node: '>=18'}
+
   cssesc@3.0.0:
     resolution: {integrity: sha512-/Tb/JcjK111nNScGob5MNtsntNM1aCNUDipB/TkwZFhyDrrE47SOx/18wF2bbjgc3ZzCSKW1T5nt5EbFoAz/Vg==}
     engines: {node: '>=4'}
@@ -1340,6 +1347,23 @@ packages:
     peerDependencies:
       react: ^19.3.1
 
+  react-router-dom@7.18.5:
+    resolution: {integrity: sha512-9HcfDMU6JJ/fp6gJZYGwNE6RknVGS4kBjH1HkNw959mCJi70TVwdipQWv2FEol9uGpi+SZTFtVpJPtEQfayeOw==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      react: '>=18'
+      react-dom: '>=18'
+
+  react-router@7.18.5:
+    resolution: {integrity: sha512-dTgvcXDOrLPrlLHrcZAqWveiK1hMSqN+rGAJzegP8HtmNkfRxOoshGWBNX3ZJ0cZjOHkRdlUJtaIhZMLLyGyPw==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      react: '>=18'
+      react-dom: '>=18'
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
+
   react@19.3.1:
     resolution: {integrity: sha512-QNhWdt7nrgVWWQG58QuGsAR3jv3Hbe4mb4vz7w2csnHavciZJgda1CPNaldF6eVxv90ud3jUXpKlHL69gO38yw==}
     engines: {node: '>=0.10.0'}
@@ -1381,6 +1405,9 @@ packages:
 
   scheduler@0.28.0:
     resolution: {integrity: sha512-juorfCmIkIw8tT+p5BXSm6PJjQF/ycEYmKyzURCIt/RaZIhL+PulbQ9Yu2z1HdOJDdqDTlxA1+xKBmHXJsczAw==}
+
+  set-cookie-parser@2.7.3:
+    resolution: {integrity: sha512-irZHtTqurLna57KQG/s+fzOwv/J6XSH4cs8M/vsrY3uCaQ3S6+QJguAH0WdN47SXlk82voMZ4naWMQf8fdEoIg==}
 
   socket.io-client@4.8.4:
     resolution: {integrity: sha512-7wjKAvVXYOJsbmUgkWbnhPD4bFpkqrUR0++XOjpGFmqDqsqV1CI93VTraeExLxpjxEqrWgFoSRZu1ihjLWfkAA==}
@@ -1659,7 +1686,7 @@ snapshots:
       '@firebase/util': 1.15.3
       tslib: 2.9.1
 
-  '@firebase/crashlytics@0.1.0(@firebase/app-types@0.9.6)(@firebase/app@0.16.5)(@types/react@19.3.0)(react@19.3.1)':
+  '@firebase/crashlytics@0.1.0(@firebase/app-types@0.9.6)(@firebase/app@0.16.5)(@types/react@19.3.0)(react-router-dom@7.18.5(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@firebase/app': 0.16.5
       '@firebase/app-types': 0.9.6
@@ -1687,6 +1714,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.3.0
       react: 19.3.1
+      react-router-dom: 7.18.5(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -2390,6 +2418,8 @@ snapshots:
 
   commander@4.1.1: {}
 
+  cookie@1.1.1: {}
+
   cssesc@3.0.0: {}
 
   csstype@3.2.3: {}
@@ -2452,7 +2482,7 @@ snapshots:
     dependencies:
       to-regex-range: 5.0.1
 
-  firebase@13.2.0(@types/react@19.3.0)(react@19.3.1):
+  firebase@13.2.0(@types/react@19.3.0)(react-router-dom@7.18.5(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1):
     dependencies:
       '@firebase/ai': 3.0.0(@firebase/app-types@0.9.6)(@firebase/app@0.16.5)
       '@firebase/analytics': 0.10.25(@firebase/app@0.16.5)
@@ -2464,7 +2494,7 @@ snapshots:
       '@firebase/app-types': 0.9.6
       '@firebase/auth': 1.13.9(@firebase/app@0.16.5)
       '@firebase/auth-compat': 0.6.14(@firebase/app-compat@0.5.21)(@firebase/app-types@0.9.6)(@firebase/app@0.16.5)
-      '@firebase/crashlytics': 0.1.0(@firebase/app-types@0.9.6)(@firebase/app@0.16.5)(@types/react@19.3.0)(react@19.3.1)
+      '@firebase/crashlytics': 0.1.0(@firebase/app-types@0.9.6)(@firebase/app@0.16.5)(@types/react@19.3.0)(react-router-dom@7.18.5(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
       '@firebase/data-connect': 0.7.4(@firebase/app@0.16.5)
       '@firebase/database': 1.1.5
       '@firebase/database-compat': 2.1.7(@firebase/app-compat@0.5.21)(@firebase/app@0.16.5)
@@ -2726,6 +2756,20 @@ snapshots:
       react: 19.3.1
       scheduler: 0.28.0
 
+  react-router-dom@7.18.5(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
+    dependencies:
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      react-router: 7.18.5(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+
+  react-router@7.18.5(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
+    dependencies:
+      cookie: 1.1.1
+      react: 19.3.1
+      set-cookie-parser: 2.7.3
+    optionalDependencies:
+      react-dom: 19.3.1(react@19.3.1)
+
   react@19.3.1: {}
 
   read-cache@1.0.2: {}
@@ -2780,6 +2824,8 @@ snapshots:
   safe-buffer@5.2.1: {}
 
   scheduler@0.28.0: {}
+
+  set-cookie-parser@2.7.3: {}
 
   socket.io-client@4.8.4:
     dependencies:
