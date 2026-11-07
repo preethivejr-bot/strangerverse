@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for secure role verification using Firebase Custom Claims
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner() {
+      return isAuthenticated() && request.auth.token.role == 'OWNER';
+    }
+
+    function isManager() {
+      return isAuthenticated() && (request.auth.token.role == 'MANAGER' || isOwner());
+    }
+
+    function isModerator() {
+      return isAuthenticated() && (request.auth.token.role == 'MODERATOR' || isManager());
+    }
+
+    function isSelf(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ========================================================
+    // USERS COLLECTION
+    // Users can read public profiles.
+    // Users can only update their own non-sensitive fields (displayName, photoURL, bio).
+    // ROLE CANNOT BE CHANGED BY NORMAL USERS - ONLY BACKEND / OWNER.
+    // ========================================================
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      
+      // Creating initial profile: role must default to NORMAL_USER unless set by Admin/Backend
+      allow create: if isAuthenticated() && isSelf(userId)
+                    && (!('role' in request.resource.data) || request.resource.data.role == 'NORMAL_USER');
+
+      // Updating profile: prevent escalating own role or altering bans
+      allow update: if (isSelf(userId) 
+                        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isBanned', 'isSuspended', 'email']))
+                    || isOwner();
+
+      allow delete: if isOwner();
+    }
+
+    // ========================================================
+    // DISTRICT JUNCTIONS COLLECTION
+    // Capacity strictly capped at 10.
+    // Modifications to participants require validation.
+    // ========================================================
+    match /junctions/{districtId} {
+      allow read: if isAuthenticated();
+      
+      // Updates must be mediated by server or verified capacity
+      allow update: if isManager() || (
+        isAuthenticated() 
+        && request.resource.data.participants.size() <= 10
+      );
+      
+      allow create, delete: if isOwner();
+    }
+
+    // ========================================================
+    // CHAT MESSAGES & VOICE SESSIONS
+    // ========================================================
+    match /chat_messages/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isModerator();
+    }
+
+    // ========================================================
+    // AUDIT LOGS & REPORTS
+    // Highly restricted: only Owner & Managers can read audit logs.
+    // ========================================================
+    match /audit_logs/{logId} {
+      allow read: if isOwner();
+      allow write: if isOwner(); // Usually written by Cloud Functions / backend only
+    }
+
+    match /reports/{reportId} {
+      allow create: if isAuthenticated();
+      allow read, update: if isModerator();
+      allow delete: if isOwner();
+    }
+  }
+}

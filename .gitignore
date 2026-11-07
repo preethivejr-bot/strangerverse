@@ -1,0 +1,29 @@
+# Node & Dependencies
+node_modules/
+.pnpm-store/
+
+# Build artifacts
+client/dist/
+dist/
+build/
+
+# Environment Variables & Secrets (NEVER COMMIT SECRETS)
+.env
+.env.local
+*.local
+*.key
+*.pem
+service-account*.json
+
+# Vercel & Cloud IDEs
+.vercel/
+.idea/
+.vscode/
+
+# OS Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+Thumbs.db
+.DS_Store
