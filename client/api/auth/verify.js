@@ -30,10 +30,13 @@ export default function handler(req, res) {
       return res.status(400).json({ error: 'Valid email is required for authentication.' });
     }
 
+    // STRICT OWNER CHECK: Only preethivejr@gmail.com is granted OWNER
     const isOwner = email === OWNER_EMAIL;
     const displayName = clientUser.displayName || email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     const photoURL = clientUser.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(email)}`;
-    const userId = clientUser.uid || `user_${Math.abs(hashCode(email))}`;
+    
+    // Unique user ID per account prevents collisions
+    const userId = isOwner ? 'user_preethive_owner' : (clientUser.uid || `user_${Math.abs(hashCode(email))}_${Date.now()}`);
 
     const verifiedUser = {
       id: userId,

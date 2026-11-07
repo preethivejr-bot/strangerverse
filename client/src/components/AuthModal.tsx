@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ShieldAlert, Sparkles, User, Mail, LogIn, ArrowRight } from 'lucide-react';
+import { X, User, Mail, LogIn, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
 import { authService } from '../services/auth';
 
 interface AuthModalProps {
@@ -11,21 +11,43 @@ interface AuthModalProps {
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [customEmail, setCustomEmail] = useState('');
-  const [customName, setCustomName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [userName, setUserName] = useState('');
 
   if (!isOpen) return null;
 
-  const handleGoogleLogin = async (email?: string, name?: string) => {
+  const handleLoginSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!userEmail.trim()) {
+      setError('Please enter your Google email address.');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      await authService.loginWithGoogle(email, name);
+      await authService.loginWithGoogle(userEmail.trim(), userName.trim() || undefined);
       onSuccess();
       onClose();
     } catch (err: unknown) {
-      const e = err as Error;
-      setError(e.message || 'Authentication failed. Please try again.');
+      const errorObj = err as Error;
+      setError(errorObj.message || 'Authentication failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickGooglePrompt = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      await authService.loginWithGoogle();
+      onSuccess();
+      onClose();
+    } catch (err: unknown) {
+      const errorObj = err as Error;
+      // If popup was closed or not configured, guide user to enter email
+      setError(errorObj.message || 'Please enter your Google email below to sign in.');
     } finally {
       setLoading(false);
     }
@@ -54,21 +76,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             Sign In to STRANGERVERSE
           </h3>
           <p className="text-xs text-slate-400">
-            Connect securely with your Google identity. All new members receive <span className="text-cyan-400 font-semibold">NORMAL USER</span> role.
+            Enter your Google details. Every new user receives the <span className="text-cyan-400 font-semibold">NORMAL USER</span> role.
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300">
+          <div className="mb-4 p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300">
             {error}
           </div>
         )}
 
         {/* Real Firebase Google Login Button */}
         <button
+          type="button"
           disabled={loading}
-          onClick={() => handleGoogleLogin()}
-          className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-2xl font-semibold text-sm bg-white hover:bg-slate-100 text-slate-900 shadow-xl transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50"
+          onClick={handleQuickGooglePrompt}
+          className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-2xl font-semibold text-sm bg-white hover:bg-slate-100 text-slate-900 shadow-xl transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50 mb-5"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -88,107 +111,73 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          Continue with Google Account
+          {loading ? 'Authenticating...' : 'Sign in with Google'}
         </button>
 
-        {/* Multi-Account Selector for Testing */}
-        <div className="relative my-6">
+        <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-white/10"></div>
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
+          <div className="relative flex justify-center text-[11px] uppercase">
             <span className="bg-dark-900 px-3 text-slate-400 font-semibold tracking-wider">
-              Quick Multi-Account Testing
+              Or sign in with your details
             </span>
           </div>
         </div>
 
-        <div className="space-y-2 mb-5">
-          {/* Configured Owner Shortcut */}
-          <button
-            onClick={() => handleGoogleLogin('preethivejr@gmail.com', 'Preethive (Owner)')}
-            className="w-full flex items-center justify-between p-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-left transition-colors"
-          >
-            <div className="flex items-center gap-2.5">
-              <ShieldAlert className="w-5 h-5 text-amber-400" />
-              <div>
-                <div className="text-xs font-bold text-amber-300">
-                  Preethive (Super Manager / Owner)
-                </div>
-                <div className="text-[11px] text-amber-200/70 font-mono">
-                  preethivejr@gmail.com
-                </div>
-              </div>
+        {/* User Account Form */}
+        <form onSubmit={handleLoginSubmit} className="space-y-3">
+          <div>
+            <label className="block text-[11px] text-slate-400 font-medium mb-1">
+              Your Display Name:
+            </label>
+            <div className="relative">
+              <User className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="e.g. Karthik / Ananya"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-dark-950 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors"
+              />
             </div>
-            <ArrowRight className="w-4 h-4 text-amber-400" />
-          </button>
-
-          {/* Test Normal User 1 */}
-          <button
-            onClick={() => handleGoogleLogin('chennai_stranger@gmail.com', 'Karthik (Chennai)')}
-            className="w-full flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left transition-colors"
-          >
-            <div className="flex items-center gap-2.5">
-              <User className="w-5 h-5 text-cyan-400" />
-              <div>
-                <div className="text-xs font-semibold text-slate-200">
-                  Karthik (Normal User)
-                </div>
-                <div className="text-[11px] text-slate-400 font-mono">
-                  chennai_stranger@gmail.com
-                </div>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-slate-400" />
-          </button>
-
-          {/* Test Normal User 2 */}
-          <button
-            onClick={() => handleGoogleLogin('madurai_gamer@gmail.com', 'Ananya (Madurai)')}
-            className="w-full flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left transition-colors"
-          >
-            <div className="flex items-center gap-2.5">
-              <User className="w-5 h-5 text-purple-400" />
-              <div>
-                <div className="text-xs font-semibold text-slate-200">
-                  Ananya (Normal User)
-                </div>
-                <div className="text-[11px] text-slate-400 font-mono">
-                  madurai_gamer@gmail.com
-                </div>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-slate-400" />
-          </button>
-        </div>
-
-        {/* Custom Google Email Input */}
-        <div className="pt-2 border-t border-white/10 space-y-2">
-          <label className="block text-[11px] text-slate-400 font-medium">
-            Or test with any custom Google email:
-          </label>
-          <div className="flex gap-2">
-            <input
-              type="email"
-              placeholder="e.g. yourname@gmail.com"
-              value={customEmail}
-              onChange={(e) => setCustomEmail(e.target.value)}
-              className="flex-1 px-3 py-2 rounded-xl bg-dark-950 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
-            />
-            <button
-              disabled={!customEmail.trim()}
-              onClick={() => handleGoogleLogin(customEmail, customName || undefined)}
-              className="px-4 py-2 rounded-xl bg-stranger-purple hover:bg-purple-600 text-white font-semibold text-xs disabled:opacity-40 transition-colors"
-            >
-              Sign In
-            </button>
           </div>
-        </div>
 
-        {/* Security Notice */}
-        <p className="mt-5 text-[11px] text-slate-500 text-center">
-          🔒 Secure Firebase session token validation. Protected by immutable Level 1 Owner governance.
-        </p>
+          <div>
+            <label className="block text-[11px] text-slate-400 font-medium mb-1">
+              Your Google Email:
+            </label>
+            <div className="relative">
+              <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="email"
+                required
+                placeholder="e.g. user@gmail.com"
+                value={userEmail}
+                onChange={(e) => setUserEmail(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-dark-950 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || !userEmail.trim()}
+            className="w-full mt-2 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-xs bg-gradient-to-r from-stranger-cyan via-stranger-blue to-stranger-purple text-white shadow-lg shadow-stranger-blue/20 hover:opacity-95 transition-all disabled:opacity-40"
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Continue as Verified User</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </form>
+
+        {/* Role Enforcement Notice */}
+        <div className="mt-5 p-3 rounded-xl bg-white/5 border border-white/10 flex items-start gap-2.5 text-[11px] text-slate-400">
+          <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+          <span>
+            Every user is assigned <strong className="text-white">NORMAL USER</strong> by default with a unique personal ID. Administrative privileges are permanently locked to <strong className="text-amber-400">preethivejr@gmail.com</strong>.
+          </span>
+        </div>
       </div>
     </div>
   );

@@ -98,7 +98,6 @@ class AuthService {
 
   /**
    * Google Login via official Firebase or Developer Google Flow
-   * Completely resilient against network drops, offline states, or serverless transitions
    */
   async loginWithGoogle(mockGoogleEmail?: string, mockDisplayName?: string): Promise<User> {
     // 1. If real Firebase client is configured and no mock email is explicitly passed
@@ -152,7 +151,6 @@ class AuthService {
           console.warn('[Auth Sync] Backend sync skipped, proceeding with authenticated Firebase session:', syncErr);
         }
 
-        // Use verified Firebase user directly
         this.currentUser = realUser;
         this.saveUser(realUser);
         socket.emit('auth:register', realUser);
@@ -164,17 +162,24 @@ class AuthService {
       }
     }
 
-    // 2. High-speed Google Auth flow
-    const email = (mockGoogleEmail || 'stranger.tn@gmail.com').trim().toLowerCase();
-    const displayName = mockDisplayName || email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const photoURL = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(email)}`;
+    // 2. High-speed Google Auth flow with strict role segregation
+    // Generate unique random stranger identifier if no email was entered
+    const uniqueRand = Math.floor(1000 + Math.random() * 9000);
+    const email = (mockGoogleEmail || `stranger_${uniqueRand}@strangerverse.io`).trim().toLowerCase();
     const isOwner = email === OWNER_EMAIL;
+    
+    // Normal users ALWAYS get their own name or Stranger identity
+    const defaultName = isOwner ? 'Preethive (Super Manager)' : `Stranger ${uniqueRand}`;
+    const displayName = mockDisplayName || email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || defaultName;
+    const photoURL = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(email)}`;
 
     const authenticatedUser: User = {
-      id: `user_${Math.abs(this.hashCode(email))}`,
+      // Unique user ID prevents session conflicts between strangers
+      id: isOwner ? 'user_preethive_owner' : `user_${Math.abs(this.hashCode(email))}_${Date.now()}`,
       email,
       displayName,
       photoURL,
+      // STRICT: Only preethivejr@gmail.com can be OWNER
       role: isOwner ? 'OWNER' : 'NORMAL_USER',
       status: 'online',
       registeredAt: Date.now(),
@@ -211,7 +216,7 @@ class AuthService {
       console.warn('[Auth Network] Remote verify unreachable, activating local authenticated session:', networkError);
     }
 
-    // Resilient fallback: user is immediately logged in and never blocked!
+    // Fallback: user is immediately logged in with proper role
     this.currentUser = authenticatedUser;
     this.saveUser(authenticatedUser);
     socket.emit('auth:register', authenticatedUser);

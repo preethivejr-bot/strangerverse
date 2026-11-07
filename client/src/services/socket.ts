@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client';
-import { SERVER_URL } from './config';
+import { SOCKET_SERVER_URL } from './config';
 
 class SocketService {
   public socket: Socket | null = null;
@@ -7,21 +7,26 @@ class SocketService {
 
   connect(): Socket {
     if (!this.socket) {
-      this.socket = io(SERVER_URL, {
+      console.log('[Socket] Connecting to real-time engine at:', SOCKET_SERVER_URL);
+      this.socket = io(SOCKET_SERVER_URL, {
         transports: ['websocket', 'polling'],
         reconnection: true,
-        reconnectionAttempts: 10,
+        reconnectionAttempts: 20,
         reconnectionDelay: 1000
       });
 
       this.socket.on('connect', () => {
         this.isConnected = true;
-        console.log('[Socket] Connected with ID:', this.socket?.id);
+        console.log('[Socket] Connected successfully with ID:', this.socket?.id);
       });
 
-      this.socket.on('disconnect', () => {
+      this.socket.on('disconnect', (reason) => {
         this.isConnected = false;
-        console.log('[Socket] Disconnected');
+        console.log('[Socket] Disconnected:', reason);
+      });
+
+      this.socket.on('connect_error', (error) => {
+        console.warn('[Socket] Connection attempt warning:', error.message);
       });
     }
 
