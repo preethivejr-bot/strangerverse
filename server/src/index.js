@@ -745,16 +745,19 @@ io.on('connection', (socket) => {
     checkAndRunBotTurn(districtId, game);
   });
 
-  socket.on('game:action', ({ districtId, actionType, payload }) => {
+  socket.on('game:action', ({ districtId, actionType, payload = {} }) => {
     const game = store.junctionGames.get(districtId);
     if (!game) return;
 
-    const userId = store.socketToUser.get(socket.id) || payload.userId;
-    if (!userId) return;
+    const currentTurn = game.getCurrentPlayer ? game.getCurrentPlayer() : null;
+    const userId = store.socketToUser.get(socket.id) || payload.userId || (currentTurn && !currentTurn.isBot ? currentTurn.userId : null);
+    if (!userId) {
+      return socket.emit('game:error', { message: 'Player session not identified. Please sign in.' });
+    }
 
     let result = { error: 'Unknown action' };
 
-    if (game.type === 'uno') {
+    if (game.type === 'uno' || game instanceof UnoGame) {
       if (actionType === 'PLAY_CARD') {
         result = game.playCard(userId, payload.cardId, payload.chosenWildColor);
       } else if (actionType === 'DRAW_CARD') {
@@ -762,13 +765,13 @@ io.on('connection', (socket) => {
       } else if (actionType === 'CALL_UNO') {
         result = game.callUno(userId);
       }
-    } else if (game.type === 'ludo') {
+    } else if (game.type === 'ludo' || game instanceof LudoGame) {
       if (actionType === 'ROLL_DICE') {
         result = game.rollDice(userId);
       } else if (actionType === 'MOVE_TOKEN') {
         result = game.moveToken(userId, payload.tokenId);
       }
-    } else if (game.type === 'truth_dare') {
+    } else if (game.type === 'truth_dare' || game instanceof TruthDareGame) {
       if (actionType === 'SPIN_BOTTLE') {
         result = game.spinBottle();
       } else if (actionType === 'CHOOSE_MODE') {

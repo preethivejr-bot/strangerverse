@@ -102,7 +102,7 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
     socket.emit('game:action', {
       districtId,
       actionType: 'PLAY_CARD',
-      payload: { cardId }
+      payload: { cardId, userId: user?.id }
     });
   };
 
@@ -111,7 +111,7 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
       socket.emit('game:action', {
         districtId,
         actionType: 'PLAY_CARD',
-        payload: { cardId: pendingWildCardId, chosenWildColor: color }
+        payload: { cardId: pendingWildCardId, chosenWildColor: color, userId: user?.id }
       });
       setWildColorPickerOpen(false);
       setPendingWildCardId(null);
@@ -122,7 +122,7 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
     socket.emit('game:action', {
       districtId,
       actionType: 'DRAW_CARD',
-      payload: {}
+      payload: { userId: user?.id }
     });
   };
 
@@ -130,7 +130,7 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
     socket.emit('game:action', {
       districtId,
       actionType: 'CALL_UNO',
-      payload: {}
+      payload: { userId: user?.id }
     });
     confetti({ particleCount: 60, spread: 50 });
   };
@@ -141,7 +141,7 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
     socket.emit('game:action', {
       districtId,
       actionType: 'ROLL_DICE',
-      payload: {}
+      payload: { userId: user?.id }
     });
   };
 
@@ -149,7 +149,7 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
     socket.emit('game:action', {
       districtId,
       actionType: 'MOVE_TOKEN',
-      payload: { tokenId }
+      payload: { tokenId, userId: user?.id }
     });
   };
 
@@ -159,7 +159,7 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
     socket.emit('game:action', {
       districtId,
       actionType: 'SPIN_BOTTLE',
-      payload: {}
+      payload: { userId: user?.id }
     });
   };
 
@@ -167,7 +167,7 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
     socket.emit('game:action', {
       districtId,
       actionType: 'CHOOSE_MODE',
-      payload: { mode }
+      payload: { mode, userId: user?.id }
     });
   };
 
@@ -175,7 +175,7 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
     socket.emit('game:action', {
       districtId,
       actionType: 'COMPLETE_TURN',
-      payload: {}
+      payload: { userId: user?.id }
     });
     confetti({ particleCount: 80, spread: 60 });
   };
@@ -184,7 +184,7 @@ export const MultiplayerGamesView: React.FC<MultiplayerGamesViewProps> = ({
     socket.emit('game:action', {
       districtId,
       actionType: 'SKIP_TURN',
-      payload: {}
+      payload: { userId: user?.id }
     });
   };
 

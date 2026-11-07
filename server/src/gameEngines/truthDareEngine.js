@@ -35,6 +35,7 @@ const DARES = [
 
 export class TruthDareGame {
   constructor(junctionId, players) {
+    this.type = 'truth_dare';
     this.junctionId = junctionId;
     this.players = players.map(p => ({
       userId: p.userId,

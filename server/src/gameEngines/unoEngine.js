@@ -3,6 +3,7 @@ const VALUES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'skip', 'rever
 
 export class UnoGame {
   constructor(junctionId, players) {
+    this.type = 'uno';
     this.junctionId = junctionId;
     this.players = players.map(p => ({
       userId: p.userId,

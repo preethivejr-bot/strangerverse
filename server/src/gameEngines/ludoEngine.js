@@ -11,6 +11,7 @@ const SAFE_SQUARES = [0, 8, 13, 21, 26, 34, 39, 47];
 
 export class LudoGame {
   constructor(junctionId, players) {
+    this.type = 'ludo';
     this.junctionId = junctionId;
     this.players = players.map((p, idx) => {
       const color = LUDO_COLORS[idx % LUDO_COLORS.length];
