@@ -1,6 +1,7 @@
 import express from 'express';
 import http from 'http';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
 import cors from 'cors';
@@ -66,6 +67,20 @@ function resolveUserRole(email, existingUser = null) {
   // Default role is NORMAL_USER
   return ROLES.NORMAL_USER;
 }
+
+// Root and Health endpoints for cloud load balancers, Render, and uptime monitors
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'ONLINE',
+    service: 'StrangerVerse Real-time Server',
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK' });
+});
 
 // REST Endpoints
 app.get('/api/health', (req, res) => {
@@ -852,12 +867,20 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
     return next();
   }
-  res.sendFile(path.join(clientDist, 'index.html'));
+  const indexPath = path.join(clientDist, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+  res.status(200).json({
+    status: 'ONLINE',
+    service: 'StrangerVerse Backend Engine',
+    message: 'Backend is active. Frontend is deployed on Vercel.'
+  });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`====================================================`);
-  console.log(`🚀 STRANGERVERSE BACKEND ENGINE LIVE ON PORT ${PORT}`);
+  console.log(`🚀 STRANGERVERSE BACKEND ENGINE LIVE ON PORT ${PORT} (0.0.0.0)`);
   console.log(`⚡ Tagline: Meet Strangers. Connect Locally. Play Together.`);
   console.log(`🛡️ Owner Email: ${OWNER_EMAIL || 'NOT SET'}`);
   console.log(`====================================================`);
